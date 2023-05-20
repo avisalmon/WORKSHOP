@@ -91,18 +91,14 @@ def main():
             Repo.clone_from(repository_url, local_directory)
             print("Clone completed successfully:  " + dir)
 
-    source_file = "C:/Latest/WORKSHOP/"
+    source_file = "C:/Latest/WORKSHOP/prep_workshop.py"
 
     desktop = os.path.join(os.path.expanduser("~"), "Desktop")
 
-    # Copy the file to the desktop
-    shutil.copy(source_file, destination_directory)
-
-    print("File copied to the desktop successfully.")
-
- 
-    # Remove the existing WORKSHOP directory. 
     import shutil
+     
+    # Remove the existing WORKSHOP directory. 
+    
 
     directory_path = "C:/WORKSHOP/"
 
