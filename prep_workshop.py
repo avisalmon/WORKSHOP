@@ -18,7 +18,6 @@ import sys
 import socket
 import os
 
-    # Checking for needed libraries. 
 def main():
 
     #check for Internet connection
@@ -38,6 +37,7 @@ def main():
         sys.exit()
 
     # Check if libraries are installed:
+    # Checking for needed libraries. 
 
     library_name = ['pygetwindow', 'psutil', 'shutil', 'GitPython']
 
@@ -74,15 +74,24 @@ def main():
     # Check if there is any Latest directory. If not that means that it's a fresh PC
     # Need to create Latest folder and icon on the desktop. 
     
-    directories = ['FPGA_design_store', 'upython-esp32', 'VGAstarter_DE10_lite']
+    directories = ['FPGA_design_store', 'upython-esp32', 'VGAstarter_DE10_lite', 'micropython']
 
     directories_plus = directories + ['WORKSHOP']
     print(directories_plus)
 
+    from git import Repo
     if os.path.exists('C:/Latest') and os.path.isdir('C:/Latest'):
         print('This is not a new Laptop. thats great. lets run')
+        # lets check if there are new repositories missing from Latest. 
+        for dir in directories_plus:
+            dir_full = 'C:/Latest/' + dir
+            if not os.path.exists(dir_full):
+                repository_url = 'https://github.com/avisalmon/' + dir
+                local_directory = 'C:/Latest/' + dir
+                os.mkdir(local_directory)
+                Repo.clone_from(repository_url, local_directory)
+                print("Clone completed successfully:  " + dir)
     else:
-        from git import Repo
         os.mkdir('C:/Latest')
         for dir in directories_plus:
             repository_url = 'https://github.com/avisalmon/' + dir
