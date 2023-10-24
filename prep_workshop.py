@@ -19,10 +19,13 @@ import socket
 import os
 import win32com.client
 import platform
-import serial.tools.list_ports
-import re
-import serial
-import time
+try:
+    import serial.tools.list_ports
+    import re
+    import serial
+    import time
+except:
+    pass
 
 def find_your_esp32():
     wmi = win32com.client.GetObject("winmgmts:")
@@ -90,7 +93,7 @@ def main():
     # Check if libraries are installed:
     # Checking for needed libraries. 
 
-    library_name = ['pygetwindow', 'psutil', 'shutil', 'GitPython', 'esptool', 'adafruit-ampy']
+    library_name = ['pygetwindow', 'psutil', 'shutil', 'GitPython', 'esptool', 'adafruit-ampy', 'pyserial']
 
     for library in library_name:
         try:
