@@ -11,21 +11,41 @@
 #    - WORKSHOP
 #     |_ ... Directories for the student
 
+# make sure all libraries exsists in the system and import it
 
 import importlib
 import subprocess
 import sys
 import socket
 import os
+import re
+
+library_name = ['pygetwindow', 'psutil', 'shutil', 'GitPython', 'esptool', 'adafruit-ampy', 'pyserial', 'pywin32']
+
+for library in library_name:
+    try:
+        # Try importing the library
+        importlib.import_module(library)
+        print(f"{library} is already installed.")
+    except ImportError:
+        # If the library is not found, install it
+        print(f"{library} is not installed. Installing...")
+        subprocess.check_call([sys.executable, '-m', 'pip', 'install', library])
+
+        # Import the library after installation
+        try:
+            importlib.import_module(library)
+        except:
+            print(f'could not import {library}')
+            pass
+
+        print(f"{library_name} has been installed.")
+
 import win32com.client
+import time
+import serial
 import platform
-try:
-    import serial.tools.list_ports
-    import re
-    import serial
-    import time
-except:
-    pass
+
 
 def find_your_esp32():
     wmi = win32com.client.GetObject("winmgmts:")
@@ -92,26 +112,6 @@ def main():
 
     # Check if libraries are installed:
     # Checking for needed libraries. 
-
-    library_name = ['pygetwindow', 'psutil', 'shutil', 'GitPython', 'esptool', 'adafruit-ampy', 'pyserial']
-
-    for library in library_name:
-        try:
-            # Try importing the library
-            importlib.import_module(library)
-            print(f"{library} is already installed.")
-        except ImportError:
-            # If the library is not found, install it
-            print(f"{library} is not installed. Installing...")
-            subprocess.check_call([sys.executable, '-m', 'pip', 'install', library])
-
-            # Import the library after installation
-            try:
-                importlib.import_module(library)
-            except:
-                pass
-
-            print(f"{library_name} has been installed.")
 
     # Kill all Quartus and unneeded windows
     import psutil
@@ -196,7 +196,7 @@ def main():
 
     for location in quartus_executable_options:
         if os.path.exists(location):
-            #subprocess.Popen([location])
+            #subprocess.Popen([location]) # removed for now until FPGA training will come back. 
             print('now opened Quartus')
             break
 
@@ -226,6 +226,7 @@ def main():
             print(f"No MicroPython prompt detected on {port}")
 
             # Burn MicroPython 
+            subprocess.run('cls', shell=True, check=True)
             cmd = f'esptool\esptool.py --chip esp32 --port {port} --baud 460800 write_flash -z 0x1000 ESP32_GENERIC-20230426-v1.20.0.bin'
             input(f'*********\n\n\nGet Ready! We will now burn the ESP32 to have Micropython\n\nhold the boot button right to the USB port and press enter\n\n*****************')
             subprocess.run(cmd, shell=True, check=True)
