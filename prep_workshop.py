@@ -128,7 +128,7 @@ def main():
     # Check if there is any Latest directory. If not that means that it's a fresh PC
     # Need to create Latest folder and icon on the desktop. 
 
-    directories = ['FPGA_design_store', 'upython-esp32', 'VGAstarter_DE10_lite', 'micropython', 'fab_exp', 'single_button']
+    directories = ['FPGA_design_store', 'upython-esp32', 'VGAstarter_DE10_lite', 'single_button']
 
     directories_plus = directories + ['WORKSHOP']
     print(directories_plus)
