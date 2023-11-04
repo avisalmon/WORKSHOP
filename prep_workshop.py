@@ -253,8 +253,14 @@ def main():
             print(f"No MicroPython prompt detected on {port}")
 
             # Burn MicroPython 
+            # Try to find 'esptool.py'
+            esptool_py = shutil.which('esptool.py')
+
+            # If 'esptool.py' was not found, try to find 'esptool'
+            esptool = shutil.which('esptool') if esptool_py is None else esptool_py 
+
             subprocess.run('cls', shell=True, check=True)
-            cmd = f'esptool --chip esp32 --port {port} --baud 460800 write_flash -z 0x1000 ESP32_GENERIC-20230426-v1.20.0.bin'
+            cmd = f'{esptool} --chip esp32 --port {port} --baud 460800 write_flash -z 0x1000 ESP32_GENERIC-20230426-v1.20.0.bin'
             input(f'*********\n\n\nGet Ready! We will now burn the ESP32 to have Micropython\n\nhold the boot button right to the USB port and press enter\n\n*****************')
             subprocess.run(cmd, shell=True, check=True)
             
