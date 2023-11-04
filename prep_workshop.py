@@ -19,8 +19,10 @@ import sys
 import socket
 import os
 import re
+from git import Repo
+import configparser
 
-library_name = ['pygetwindow', 'psutil', 'shutil', 'GitPython', 'esptool', 'adafruit-ampy', 'pyserial', 'pywin32']
+library_name = ['pygetwindow', 'psutil', 'shutil', 'GitPython', 'esptool', 'adafruit-ampy', 'pyserial', 'pywin32', 'adafruit-ampy']
 
 for library in library_name:
     try:
@@ -45,6 +47,8 @@ import win32com.client
 import time
 import serial
 import platform
+import shutil
+import psutil
 
 
 def find_your_esp32():
@@ -87,34 +91,59 @@ def find_your_esp32():
 
         if com_number:
             print(f'your ESP32 is connected to COM{com_number}')
+            return com_number
         else:
             input('\nPlease connect the ESP32 device, than press any key...')
+            return 0
 
-        return com_number
+
+#check for Internet connection
+def check_internet_connection():
+    try:
+        # Attempt to connect to a reliable server (Google DNS)
+        socket.create_connection(("8.8.8.8", 53), timeout=3)
+        return True
+    except socket.error:
+        return False
+    
+# function Upload files to device
+def upload_files_to_device(port, directory):
+    # Walk through the directory and upload each file.
+    for root, dirs, file_names in os.walk(directory):
+        for file_name in file_names:
+            file_path = os.path.join(root, file_name)
+            dest_path = file_path.split(directory)[-1].lstrip('\\/')  # Get the relative path to maintain directory structure.
+
+            # Use ampy CLI tool to upload files to the board
+            command = [
+                'ampy', 
+                '--port', port, 
+                'put', 
+                file_path, 
+                dest_path
+            ]
+            print(f"Uploading {file_path} to {dest_path}...")
+            try:
+                subprocess.run(command, check=True)
+            except subprocess.CalledProcessError as e:
+                print(f"Failed to upload {file_path}: {e}")
 
 def main():
 
-    #check for Internet connection
-    def check_internet_connection():
-        try:
-            # Attempt to connect to a reliable server (Google DNS)
-            socket.create_connection(("8.8.8.8", 53), timeout=3)
-            return True
-        except socket.error:
-            return False
-
     # Check internet connection
-    if check_internet_connection():
-        print("Internet connection is available.")
-    else:
-        print("No internet connection. Please connect to the network")
-        sys.exit()
+    while not check_internet_connection():
+        input('You are not connected to the Internet\nPlease connect to the Internet, press enter when done....')
+
+    # if check_internet_connection():
+    #     print("Internet connection is available.")
+    # else:
+    #     print("No internet connection. Please connect to the network")
+    #     sys.exit()
 
     # Check if libraries are installed:
     # Checking for needed libraries. 
 
     # Kill all Quartus and unneeded windows
-    import psutil
 
     process_names = ['quartus', 'calc', 'thonny'] 
 
@@ -133,9 +162,8 @@ def main():
     directories_plus = directories + ['WORKSHOP']
     print(directories_plus)
 
-    from git import Repo
     if os.path.exists('C:/Latest') and os.path.isdir('C:/Latest'):
-        print('This is not a new Laptop. thats great. lets run')
+        # print('This is not a new Laptop. thats great. lets run')
         # lets check if there are new repositories missing from Latest. 
         for dir in directories_plus:
             dir_full = 'C:/Latest/' + dir
@@ -158,11 +186,8 @@ def main():
 
     desktop = os.path.join(os.path.expanduser("~"), "Desktop")
 
-    import shutil
 
     # Remove the existing WORKSHOP directory. 
-
-
     directory_path = "C:/WORKSHOP/"
 
     if os.path.exists(directory_path) and os.path.isdir(directory_path):
@@ -197,7 +222,7 @@ def main():
     for location in quartus_executable_options:
         if os.path.exists(location):
             #subprocess.Popen([location]) # removed for now until FPGA training will come back. 
-            print('now opened Quartus')
+            print('now usualy would opened Quartus')
             break
 
     try:
@@ -207,8 +232,10 @@ def main():
         thonny_path = os.path.join(home_directory, "AppData\Local\Programs\Thonny\\thonny.exe")
         print(f'Thonny location: {thonny_path}')
 
-        #setup the comport to Thonny before opening it: 
-        com_num = find_your_esp32()
+        #setup the comport to Thonny before opening it:
+        com_num = 0 
+        while not com_num:
+            com_num = find_your_esp32()
         
         # lets burn FW.
         port = 'COM' + str(com_num)
@@ -217,7 +244,7 @@ def main():
                 ser.write(b'\r\n')
                 time.sleep(2)
                 response = ser.read_all().decode()
-                print(response)
+                #print(response)
                 return ">>>" in response
         
         if check_micropython(port):
@@ -230,6 +257,8 @@ def main():
             cmd = f'esptool\esptool.py --chip esp32 --port {port} --baud 460800 write_flash -z 0x1000 ESP32_GENERIC-20230426-v1.20.0.bin'
             input(f'*********\n\n\nGet Ready! We will now burn the ESP32 to have Micropython\n\nhold the boot button right to the USB port and press enter\n\n*****************')
             subprocess.run(cmd, shell=True, check=True)
+            
+            upload_files_to_device(port, r'C:\WORKSHOP\single_button\Upload_these_to_device')
 
         # process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         # stdout, stderr = process.communicate()
@@ -241,8 +270,21 @@ def main():
         #     print("Flashing failed!")
         #     print(stderr.decode())
 
+        # Fix Thonny before lounching it: 
+        config_path = os.path.join(os.getenv('APPDATA'), 'Thonny', 'configuration.ini')
+        file_location = r'C:\WORKSHOP\single_button'
+        # port is now 'COM#' 
+        config = configparser.ConfigParser()
+        config.read(config_path)
+        config['ESP32']['port'] = port
+        #config['run'] = {'working_directory': file_location}
+
+        with open(config_path, 'w') as configfile:
+            config.write(configfile)
+        
+
         subprocess.Popen(thonny_path)
-        print(thonny_path)
+        #print(thonny_path)
         print('tried to open it')
         print(f'The ESP32 is on COM{find_your_esp32()}')
     except subprocess.CalledProcessError:
