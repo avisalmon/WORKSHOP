@@ -260,6 +260,7 @@ def main():
             esptool = shutil.which('esptool') if esptool_py is None else esptool_py 
 
             subprocess.run('cls', shell=True, check=True)
+            os.chdir('C:/Latest/WORKSHOP')
             cmd = f'{esptool} --chip esp32 --port {port} --baud 460800 write_flash -z 0x1000 ESP32_GENERIC-20230426-v1.20.0.bin'
             input(f'*********\n\n\nGet Ready! We will now burn the ESP32 to have Micropython\n\nhold the boot button right to the USB port and press enter\n\n*****************')
             subprocess.run(cmd, shell=True, check=True)
